@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from fake_useragent import UserAgent
+import crawler.PxRequest as PxRequest
 
 baseURL = 'https://www.gsmarena.com/makers.php3'
 
