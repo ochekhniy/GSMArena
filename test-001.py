@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+from fake_useragent import UserAgent
 
 baseURL = 'https://www.gsmarena.com/makers.php3'
 
@@ -8,7 +9,7 @@ urlParts = urlparse(baseURL)
 hostname = urlParts.hostname
 scheme = urlParts.scheme
 
-response = requests.get(baseURL)
+response = requests.get(baseURL, headers={'User-Agent': UserAgent().chrome})
 soup = BeautifulSoup(response.text, 'lxml')
 
 brandsTable = soup.find_all('div', class_='main main-makers l-box col float-right')
@@ -26,7 +27,7 @@ for tag in brandsTable:
 pagesToParse = []
 for brand in brandLinks:
     link = brandLinks[brand]
-    brandPageResponse = requests.get(link)
+    brandPageResponse = requests.get(link, headers={'User-Agent': UserAgent().chrome})
     brandPageSoup = BeautifulSoup(brandPageResponse.text, 'lxml')
     brandNav = brandPageSoup.find_all('div', class_='nav-pages')
 
