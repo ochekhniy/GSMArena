@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup as bS
 from crawler.PxRequest import PxRequest
+import pickle
 
 
 class URLSCrawler:
@@ -23,6 +24,14 @@ class URLSCrawler:
 
     def run_stage1(self):
         # get all main brand pages
+        try:
+            with open('brand_links.pickle', 'rb') as f:
+                self.brand_links = pickle.load(f)
+            self.stage1_completed = True
+            return
+        except FileNotFoundError as e:
+            None
+
         response = self.px_request.get(self.baseURL)
         soup = bS(response.text, 'lxml')
         brands_table = soup.find_all('div', class_='main main-makers l-box col float-right')
@@ -35,10 +44,21 @@ class URLSCrawler:
                     self.scheme + '://' + self.hostname+'/'+brand.get('href')
         self.stage1_completed = True
 
+        with open('brand_links.pickle', 'wb') as f:
+            pickle.dump(self.brand_links, f)
+
     def run_stage2(self):
         # get all brands pages
         if not self.stage1_completed:
             self.run_stage1()
+
+        try:
+            with open('brand_pages.pickle', 'rb') as f:
+                self.brand_pages = pickle.load(f)
+            self.stage2_completed = True
+            return
+        except FileNotFoundError as e:
+            None
 
         self.brand_pages = []
 
@@ -55,9 +75,12 @@ class URLSCrawler:
                 for pgLinkValue in pg_links:
                     brand_page_links.append(self.scheme + '://' + self.hostname+'/'+pgLinkValue['href'])
 
-            self.brand_pages.append({'brand': brand, 'pages': brand_page_links})
+            self.brand_pages.append({'brand': brand, 'pages': brand_page_links, 'completed': False})
 
-            self.stage2_completed = True
+        self.stage2_completed = True
+
+        with open('brand_pages.pickle', 'wb') as f:
+            pickle.dump(self.brand_pages, f)
 
     def run_stage3(self):
         if not self.stage2_completed:
