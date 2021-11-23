@@ -74,9 +74,8 @@ class PxRequest:
                 raise Exception('Empty proxy list')
 
 
-pxRequest1 = PxRequest()
-
-result = pxRequest1.get('https://www.gsmarena.com/makers.php3')
-
-print(result.status_code)
-print(pxRequest1.proxy_using)
+if __name__ == '__main__':
+    pxRequest1 = PxRequest()
+    result = pxRequest1.get('https://www.gsmarena.com/makers.php3')
+    print(result.status_code)
+    print(pxRequest1.proxy_using)
