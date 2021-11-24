@@ -22,12 +22,16 @@ class URLSCrawler:
         self.stage2_completed = False
         self.brand_pages = []
 
+        self.stage3_completed = False
+        self.item_pages = []
+
     def run_stage1(self):
         # get all main brand pages
         try:
             with open('brand_links.pickle', 'rb') as f:
                 self.brand_links = pickle.load(f)
             self.stage1_completed = True
+            print('  - saved stage 1 in use')
             return
         except FileNotFoundError as e:
             None
@@ -46,6 +50,7 @@ class URLSCrawler:
 
         with open('brand_links.pickle', 'wb') as f:
             pickle.dump(self.brand_links, f)
+        print('  - stage 1 completed')
 
     def run_stage2(self):
         # get all brands pages
@@ -56,6 +61,7 @@ class URLSCrawler:
             with open('brand_pages.pickle', 'rb') as f:
                 self.brand_pages = pickle.load(f)
             self.stage2_completed = True
+            print('  - saved stage 2 in use')
             return
         except FileNotFoundError as e:
             None
@@ -68,24 +74,25 @@ class URLSCrawler:
             brand_page_soup = bS(brand_page_response.text, 'lxml')
             brand_nav = brand_page_soup.find_all('div', class_='nav-pages')
 
-            brand_page_links = [link, ]
+            brand_page_links = [{'page': link, 'completed': False}]
 
             for page in brand_nav:
                 pg_links = page.find_all('a')
                 for pgLinkValue in pg_links:
-                    brand_page_links.append(self.scheme + '://' + self.hostname+'/'+pgLinkValue['href'])
+                    brand_page_links.append(
+                        {'page': self.scheme + '://' + self.hostname+'/'+pgLinkValue['href'], 'completed': False}
+                    )
 
-            self.brand_pages.append({'brand': brand, 'pages': brand_page_links, 'completed': False})
+            self.brand_pages.append({'brand': brand, 'pages': brand_page_links})
+            print(brand)
 
         self.stage2_completed = True
 
         with open('brand_pages.pickle', 'wb') as f:
             pickle.dump(self.brand_pages, f)
+        print('  - stage 2 completed')
 
     def run_stage3(self):
         if not self.stage2_completed:
             self.run_stage2()
 
-        for brand, pages_list in self.brand_pages.items():
-            for link in pages_list:
-                print(link)

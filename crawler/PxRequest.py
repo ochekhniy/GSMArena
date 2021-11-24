@@ -35,14 +35,29 @@ class PxRequest:
 
             for row in rows:
                 proxy_dict = {
-                    "http": 'http://'+row['value']
+                    "http": 'http://' + row['value']
                 }
 
                 local_proxy_list.append(proxy_dict)
             page += 1
         return local_proxy_list
 
-    default_get_proxy_func = un_static_method(get_proxy_list_from_fox_tools)
+    @staticmethod
+    def get_proxy_list_from_file(file='proxies.txt'):
+
+        local_proxy_list = []
+        with open('proxies.txt', 'r') as f:
+            contents = f.readlines()
+        for line in contents:
+            ip, port, user, password = line.replace('\n', '').split(':', )
+            proxy_dict = {
+                "https": f'http://{user}:{password}@{ip}:{port}/'
+            }
+            local_proxy_list.append(proxy_dict)
+
+        return local_proxy_list
+
+    default_get_proxy_func = un_static_method(get_proxy_list_from_file)
 
     def __init__(self, get_proxy_func=default_get_proxy_func):
         self.proxy_list = get_proxy_func()
@@ -66,7 +81,7 @@ class PxRequest:
                     allow_redirects=True,
                 )
                 if response.status_code < 400:
-                    self.proxy_using[chosen_proxy['http']] = self.proxy_using.get(chosen_proxy['http'], 0) + 1
+                    self.proxy_using[chosen_proxy['https']] = self.proxy_using.get(chosen_proxy['https'], 0) + 1
                     return response
                 else:
                     self.proxy_list.remove(chosen_proxy)
