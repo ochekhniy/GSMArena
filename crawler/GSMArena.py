@@ -2,6 +2,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup as bS
 from crawler.PxRequest import PxRequest
 import pickle
+import os
 
 
 class URLSCrawler:
@@ -25,16 +26,19 @@ class URLSCrawler:
         self.stage3_completed = False
         self.item_pages = []
 
+        if not os.path.isdir("saves"):
+            os.mkdir("saves")
+
     def run_stage1(self):
         # get all main brand pages
         try:
-            with open('brand_links.pickle', 'rb') as f:
+            with open('saves\\brand_links.pickle', 'rb') as f:
                 self.brand_links = pickle.load(f)
             self.stage1_completed = True
             print('  - saved stage 1 in use')
             return
-        except FileNotFoundError as e:
-            None
+        except FileNotFoundError:
+            pass
 
         response = self.px_request.get(self.baseURL)
         soup = bS(response.text, 'lxml')
@@ -48,7 +52,7 @@ class URLSCrawler:
                     self.scheme + '://' + self.hostname+'/'+brand.get('href')
         self.stage1_completed = True
 
-        with open('brand_links.pickle', 'wb') as f:
+        with open('saves\\brand_links.pickle', 'wb') as f:
             pickle.dump(self.brand_links, f)
         print('  - stage 1 completed')
 
@@ -58,13 +62,13 @@ class URLSCrawler:
             self.run_stage1()
 
         try:
-            with open('brand_pages.pickle', 'rb') as f:
+            with open('saves\\brand_pages.pickle', 'rb') as f:
                 self.brand_pages = pickle.load(f)
             self.stage2_completed = True
             print('  - saved stage 2 in use')
             return
-        except FileNotFoundError as e:
-            None
+        except FileNotFoundError:
+            pass
 
         self.brand_pages = []
 
@@ -88,7 +92,7 @@ class URLSCrawler:
 
         self.stage2_completed = True
 
-        with open('brand_pages.pickle', 'wb') as f:
+        with open('saves\\brand_pages.pickle', 'wb') as f:
             pickle.dump(self.brand_pages, f)
         print('  - stage 2 completed')
 
@@ -96,3 +100,21 @@ class URLSCrawler:
         if not self.stage2_completed:
             self.run_stage2()
 
+        '''
+        try:
+            with open('saves\\item_pages.pickle', 'rb') as f:
+                self.item_pages = pickle.load(f)
+            self.stage3_completed = True
+            print('  - saved stage 3 in use')
+            return
+        except FileNotFoundError:
+            pass
+
+        self.item_pages = []
+        self.stage3_completed = True
+
+        with open('saves\\item_pages.pickle', 'wb') as f:
+            pickle.dump(self.brand_pages, f)
+        print('  - stage 2 completed')
+        
+        '''
