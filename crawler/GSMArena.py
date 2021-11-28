@@ -29,6 +29,9 @@ class URLSCrawler:
         if not os.path.isdir("saves"):
             os.mkdir("saves")
 
+        if not os.path.isdir("saves//pages"):
+            os.mkdir("saves//pages")
+
     def run_stage1(self):
         # get all main brand pages
         try:
@@ -100,21 +103,40 @@ class URLSCrawler:
         if not self.stage2_completed:
             self.run_stage2()
 
-        '''
         try:
             with open('saves\\item_pages.pickle', 'rb') as f:
                 self.item_pages = pickle.load(f)
             self.stage3_completed = True
             print('  - saved stage 3 in use')
-            return
         except FileNotFoundError:
             pass
 
-        self.item_pages = []
-        self.stage3_completed = True
+        for brand in self.brand_pages:
+            for page in [x for x in brand['pages'] if not x['completed']]:
+                link = page['page']
+                brand_page_response = self.px_request.get(link)
+                brand_page_soup = bS(brand_page_response.text, 'lxml')
+                brand_items = brand_page_soup.find_all('div', class_='makers')
 
-        with open('saves\\item_pages.pickle', 'wb') as f:
-            pickle.dump(self.brand_pages, f)
-        print('  - stage 2 completed')
+                for point in brand_items:
+                    item_links = point.find_all('li')
+
+                    for item in item_links:
+                        self.item_pages.append(
+                            {
+                                'brand': brand['brand'],
+                                'item': self.scheme + '://' + self.hostname+'/'+item.a['href'],
+                                'name': item.strong.span.text
+                            }
+                        )
+                        page['completed'] = True
+
+            with open('saves\\item_pages.pickle', 'wb') as f:
+                pickle.dump(self.brand_pages, f)
+            with open('saves\\brand_pages.pickle', 'wb') as f:
+                pickle.dump(self.brand_pages, f)
+
+        self.stage3_completed = True
+        print('  - stage 3 completed')
+
         
-        '''
