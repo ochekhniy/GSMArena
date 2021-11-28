@@ -1,5 +1,6 @@
 from fake_useragent import UserAgent
 from requests import get as get_request
+from requests.exceptions import ProxyError
 from bs4 import BeautifulSoup as bS
 from random import choice as random_choice
 
@@ -73,17 +74,20 @@ class PxRequest:
         while True:
             if len(self.proxy_list):
                 chosen_proxy = random_choice(self.proxy_list)
-                response = get_request(
-                    the_url,
-                    headers={'User-Agent': UserAgent().random},
-                    timeout=self.timeout,
-                    proxies=chosen_proxy,
-                    allow_redirects=True,
-                )
-                if response.status_code < 400:
-                    self.proxy_using[chosen_proxy['https']] = self.proxy_using.get(chosen_proxy['https'], 0) + 1
-                    return response
-                else:
+                try:
+                    response = get_request(
+                        the_url,
+                        headers={'User-Agent': UserAgent().random},
+                        timeout=self.timeout,
+                        proxies=chosen_proxy,
+                        allow_redirects=True,
+                    )
+                    if response.status_code < 400:
+                        self.proxy_using[chosen_proxy['https']] = self.proxy_using.get(chosen_proxy['https'], 0) + 1
+                        return response
+                    else:
+                        self.proxy_list.remove(chosen_proxy)
+                except ProxyError as e:
                     self.proxy_list.remove(chosen_proxy)
             else:
                 raise Exception('Empty proxy list')

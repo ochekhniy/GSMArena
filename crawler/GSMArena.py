@@ -132,7 +132,7 @@ class URLSCrawler:
                         page['completed'] = True
 
             with open('saves\\item_pages.pickle', 'wb') as f:
-                pickle.dump(self.brand_pages, f)
+                pickle.dump(self.item_pages, f)
             with open('saves\\brand_pages.pickle', 'wb') as f:
                 pickle.dump(self.brand_pages, f)
 
