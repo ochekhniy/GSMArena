@@ -1,8 +1,11 @@
+import random
+
 from fake_useragent import UserAgent
 from requests import get as get_request
 from requests.exceptions import ProxyError
 from bs4 import BeautifulSoup as bS
 from random import choice as random_choice
+import time
 
 
 def un_static_method(static):
@@ -89,6 +92,7 @@ class PxRequest:
                         self.proxy_list.remove(chosen_proxy)
                 except ProxyError as e:
                     self.proxy_list.remove(chosen_proxy)
+                time.sleep(random.choice([0, 0, 1, 1, 1, 2, 2, 3, 3, 5]))
             else:
                 raise Exception('Empty proxy list')
 
