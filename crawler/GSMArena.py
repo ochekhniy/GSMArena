@@ -3,11 +3,13 @@ from bs4 import BeautifulSoup as bS
 from crawler.PxRequest import PxRequest
 import pickle
 import os
+import string
 
 
 class URLSCrawler:
 
     baseURL = 'https://www.gsmarena.com/makers.php3'
+    valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
 
     def __init__(self):
         self.urls_list = []
@@ -25,6 +27,8 @@ class URLSCrawler:
 
         self.stage3_completed = False
         self.item_pages = []
+
+        self.stage4_completed = False
 
         if not os.path.isdir("saves"):
             os.mkdir("saves")
@@ -85,9 +89,9 @@ class URLSCrawler:
 
             for page in brand_nav:
                 pg_links = page.find_all('a')
-                for pgLinkValue in pg_links:
+                for pg_link_value in pg_links:
                     brand_page_links.append(
-                        {'page': self.scheme + '://' + self.hostname+'/'+pgLinkValue['href'], 'completed': False}
+                        {'page': self.scheme + '://' + self.hostname+'/'+pg_link_value['href'], 'completed': False}
                     )
 
             self.brand_pages.append({'brand': brand, 'pages': brand_page_links})
@@ -126,7 +130,8 @@ class URLSCrawler:
                             {
                                 'brand': brand['brand'],
                                 'item': self.scheme + '://' + self.hostname+'/'+item.a['href'],
-                                'name': item.strong.span.text
+                                'name': item.strong.span.text,
+                                'completed': False
                             }
                         )
                         page['completed'] = True
@@ -139,4 +144,31 @@ class URLSCrawler:
         self.stage3_completed = True
         print('  - stage 3 completed')
 
-        
+    def run_stage4(self):
+        if not self.stage3_completed:
+            self.run_stage3()
+
+        current_brand = ''
+        current_path = ''
+        for item in [x for x in self.item_pages if not x['completed']]:
+            brand, link, name = item['brand'], item['item'], item['name']
+            name = ''.join(c for c in name if c in self.valid_chars)
+            if current_brand != brand:
+                current_path = 'saves//pages//'+brand
+                if not os.path.isdir(current_path):
+                    os.mkdir(current_path)
+            try:
+                item_page = self.px_request.get(link)
+                with open(current_path + f'//{name}.html', 'w', encoding='utf-8') as f:
+                    f.write(item_page.text)
+            except Exception as e:
+                print(e.args)
+                break
+
+            item['completed'] = True
+
+        if len([x for x in self.item_pages if not x['completed']]) == 0:
+            self.stage4_completed = True
+
+        with open('saves\\item_pages.pickle', 'wb') as f:
+            pickle.dump(self.item_pages, f)
