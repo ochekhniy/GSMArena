@@ -1,5 +1,6 @@
 import random
 
+import requests.exceptions
 from fake_useragent import UserAgent
 from requests import get as get_request
 from requests.exceptions import ProxyError
@@ -50,12 +51,26 @@ class PxRequest:
     def get_proxy_list_from_file(file='proxies.txt'):
 
         local_proxy_list = []
-        with open('proxies.txt', 'r') as f:
+        with open(file, 'r') as f:
             contents = f.readlines()
         for line in contents:
             ip, port, user, password = line.replace('\n', '').split(':', )
             proxy_dict = {
                 "https": f'http://{user}:{password}@{ip}:{port}/'
+            }
+            local_proxy_list.append(proxy_dict)
+
+        return local_proxy_list
+
+    @staticmethod
+    def get_proxy_list_from_simple_file(file='proxies_list.txt'):
+        local_proxy_list = []
+        with open(file, 'r', encoding='cp1252') as f:
+            contents = f.readlines()
+        for line in contents:
+            proxy = line.replace('\n', '')
+            proxy_dict = {
+                "https": f'http://{proxy}/'
             }
             local_proxy_list.append(proxy_dict)
 
@@ -90,9 +105,17 @@ class PxRequest:
                         return response
                     else:
                         self.proxy_list.remove(chosen_proxy)
-                except ProxyError as e:
+                except ProxyError:
                     self.proxy_list.remove(chosen_proxy)
-                time.sleep(random.choice([0, 0, 1, 1, 1, 2, 2, 3, 3, 5]))
+                    print(chosen_proxy, 'removed - ProxyError')
+                except requests.exceptions.TooManyRedirects:
+                    self.proxy_list.remove(chosen_proxy)
+                    print(chosen_proxy, 'removed - TooManyRedirects')
+                except requests.exceptions.Timeout:
+                    self.proxy_list.remove(chosen_proxy)
+                    print(chosen_proxy, 'removed - timeout')
+
+                time.sleep(random.choice([1, 1, 3, 4, 1, 2, 2, 3, 3, 5]))
             else:
                 raise Exception('Empty proxy list')
 
